@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Equashare Quick</title>
+</head>
+<body class="quick-popup-body">
+  <div class="quick-popup">
+    <div class="quick-popup-preview" id="quickPreview"></div>
+    <textarea
+      id="quickInput"
+      class="quick-popup-input"
+      data-i18n-placeholder="quickPopup.placeholder"
+      placeholder="LaTeXを入力..."
+      autofocus
+      spellcheck="false"
+    ></textarea>
+    <div class="quick-popup-row">
+      <span id="quickStatus" class="quick-popup-status" role="status" aria-live="polite"></span>
+      <button id="quickCopyBtn" type="button" data-i18n="quickPopup.copy" data-i18n-title="quickPopup.copy.title">
+        画像をコピー
+      </button>
+      <button id="quickOpenMainBtn" type="button" data-i18n="quickPopup.openMain">編集画面へ</button>
+    </div>
+  </div>
+  <script type="module" src="/src/quickPopup.ts"></script>
+</body>
+</html>

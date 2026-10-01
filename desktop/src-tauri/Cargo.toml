@@ -1,0 +1,29 @@
+[package]
+name = "mathimg-app"
+version = "5.0.0"
+description = "LaTeX math to image (SVG/PNG) - realtime preview desktop app"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }
+
+[dependencies]
+tauri = { version = "1", features = ["dialog-ask", "dialog-open", "dialog-save", "global-shortcut-all", "path-all", "system-tray", "window-close", "window-hide", "window-show", "window-set-focus", "window-set-title"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rand = "0.8"
+resvg = { version = "0.43", default-features = false, features = ["text", "system-fonts", "memmap-fonts"] }
+arboard = "3"
+tauri-plugin-window-state = "0.1.1"
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true

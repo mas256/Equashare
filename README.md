@@ -1,5 +1,15 @@
 # Equashare
 
+## v5.0.0
+
+Windowsデスクトップ版とChrome/Edge拡張機能版のソースは、それぞれ [`desktop/`](desktop/) と [`extension/`](extension/) にあります。インストーラーと拡張機能のビルド済みZIPは [Releases](https://github.com/mas256/Equashare/releases) から取得できます。
+
+ブラウザで数式を選択して `Ctrl+Shift+E` を押すと、デスクトップ版が利用できる場合はデスクトップ版の簡易表示へ、ない場合は拡張機能の簡易表示へ移ります。ブラウザ以外が前面のときはデスクトップ版の簡易表示を開きます。簡易表示から編集画面へ移る際も、入力内容を引き継ぎます。MathJax、KaTeX、ChatGPTのような数式表示に対応する抽出処理を改善しました。
+
+初回のアプリ起動でWindowsサインイン時の常駐とNative Messaging連携を設定します。拡張機能のショートカットが有効かは `chrome://extensions/shortcuts` または `edge://extensions/shortcuts` で確認してください。
+
+更新手順は [v5.0.0 セットアップ](INSTALL_5.0.0.md)を参照してください。
+
 [English](README_en.md) | 日本語
 
 ### 数式を、つくって、画像にして、共有する。

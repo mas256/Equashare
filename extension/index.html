@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Equashare</title>
+</head>
+<body>
+  <div class="app">
+    <header class="titlebar">
+      <h1>Equashare<span id="unsavedDot" class="unsaved-dot hidden" aria-hidden="true" data-i18n-title="app.unsavedDot.title"></span></h1>
+      <span id="status" class="status" role="status" aria-live="polite"></span>
+      <button id="btnHistory" class="icon-btn" data-i18n-title="header.history.title" data-i18n-aria-label="header.history.ariaLabel" type="button">🕘</button>
+      <button id="btnHelp" class="icon-btn" data-i18n-title="header.help.title" data-i18n-aria-label="header.help.ariaLabel" type="button">？</button>
+      <button id="btnSettings" class="icon-btn" data-i18n-title="header.settings.title" data-i18n-aria-label="header.settings.ariaLabel" type="button">⚙</button>
+      <button id="btnTheme" class="icon-btn" data-i18n-title="header.theme.title" data-i18n-aria-label="header.theme.ariaLabel" type="button">🌙</button>
+    </header>
+
+    <div id="templateEditBar" class="template-edit-bar hidden" role="status">
+      <span id="templateEditBarText"></span>
+    </div>
+
+    <main class="main" id="mainLayout">
+      <section class="editor-pane" id="editorPane">
+        <div class="coding-part" id="codingPart">
+          <div class="editor-toolbar">
+            <select id="userTemplateSelect" data-i18n-title="toolbar.userTemplateSelect.title">
+              <option value="" data-i18n="toolbar.userTemplateSelect.placeholder">ユーザーテンプレートを挿入...</option>
+            </select>
+            <select id="sampleSelect" data-i18n-title="toolbar.sampleSelect.title">
+              <option value="" data-i18n="toolbar.sampleSelect.placeholder">サンプルを挿入...</option>
+              <option value="a_{n+1}=\dfrac{a_{n}}{2-a_{n}}" data-i18n="sample.recurrence">漸化式</option>
+              <option value="\int_0^1 x^2\,dx = \dfrac{1}{3}x^3" data-i18n="sample.definiteIntegral">定積分</option>
+              <option value="\sum_{k=1}^n k = \dfrac{n(n+1)}{2}" data-i18n="sample.sum">総和</option>
+              <option value="\lim_{x \to 0} \dfrac{\sin x}{x} = 1" data-i18n="sample.limit">極限</option>
+              <option value="\begin{pmatrix} a & b \\ c & d \end{pmatrix}" data-i18n="sample.matrix">行列</option>
+              <option value="e^{i\pi}+1=0" data-i18n="sample.euler">オイラーの等式</option>
+              <option value="\text{円周率は$\pi$}" data-i18n="sample.text">テキスト</option>
+              <option value="\begin{array}{c|cc} & x & y \\ \hline a & 1 & 2 \\ b & 3 & 4 \end{array}" data-i18n="sample.array">表(array)</option>
+              <option value="\vec{a}\cdot\vec{b}=|a||b|\cos\theta" data-i18n="sample.vectorDot">ベクトル（内積）</option>
+              <option value="a^{p-1} \equiv 1 \pmod{p}" data-i18n="sample.fermat">フェルマーの小定理</option>
+            </select>
+          </div>
+
+          <div class="template-buttons" id="templateButtons">
+            <button type="button" class="tmpl" data-insert="\frac{a}{b}" data-cursor="1" data-i18n-title="tmpl.frac.title">分数</button>
+            <button type="button" class="tmpl" data-insert="\sqrt{a}" data-cursor="1" data-i18n-title="tmpl.sqrt.title">√</button>
+            <button type="button" class="tmpl" data-insert="a^{b}" data-cursor="3" data-i18n-title="tmpl.sup.title">x^y</button>
+            <button type="button" class="tmpl" data-insert="a_{b}" data-cursor="3" data-i18n-title="tmpl.sub.title">x_y</button>
+            <button type="button" class="tmpl" data-insert="\sum_{k=1}^{n}" data-cursor="0" data-i18n-title="tmpl.sum.title">Σ</button>
+            <button type="button" class="tmpl" data-insert="\int_{a}^{b}" data-cursor="0" data-i18n-title="tmpl.int.title">∫</button>
+            <button type="button" class="tmpl" data-insert="\lim_{x \to 0}" data-cursor="0" data-i18n-title="tmpl.lim.title">lim</button>
+            <button type="button" class="tmpl" data-insert="\text{}" data-cursor="1" data-i18n-title="tmpl.text.title">text</button>
+            <button type="button" class="tmpl" data-insert="\mathbb{}" data-cursor="1" data-i18n-title="tmpl.mathbb.title">𝔸</button>
+            <button type="button" class="tmpl vector-btn" data-insert="\overrightarrow{}" data-cursor="1" data-i18n-title="tmpl.overrightarrow.title">
+              <span class="vector-arrow">→</span><span class="vector-base">AB</span>
+            </button>
+            <button type="button" class="tmpl vector-btn" data-insert="\vec{}" data-cursor="1" data-i18n-title="tmpl.vec.title">
+              <span class="vector-arrow">→</span><span class="vector-base">a</span>
+            </button>
+
+            <div class="tmpl-dropdown" id="eqDropdown">
+              <button type="button" class="tmpl-trigger" id="eqTrigger" data-i18n-title="tmpl.eqTrigger.title" aria-haspopup="menu" aria-expanded="false">=</button>
+              <div class="tmpl-dropdown-menu" id="eqMenu" role="menu">
+                <button type="button" role="menuitem" class="tmpl" data-insert="\gt" data-cursor="0" data-i18n-title="tmpl.gt.title">&gt;</button>
+                <button type="button" role="menuitem" class="tmpl" data-insert="\lt" data-cursor="0" data-i18n-title="tmpl.lt.title">&lt;</button>
+                <button type="button" role="menuitem" class="tmpl" data-insert="\ge" data-cursor="0" data-i18n-title="tmpl.ge.title">≥</button>
+                <button type="button" role="menuitem" class="tmpl" data-insert="\le" data-cursor="0" data-i18n-title="tmpl.le.title">≤</button>
+                <button type="button" role="menuitem" class="tmpl" data-insert="\neq" data-cursor="0" data-i18n-title="tmpl.neq.title">≠</button>
+                <button type="button" role="menuitem" class="tmpl" data-insert="\approx" data-cursor="0" data-i18n-title="tmpl.approx.title">≈</button>
+                <button type="button" role="menuitem" class="tmpl" data-insert="\equiv" data-cursor="0" data-i18n-title="tmpl.equiv.title">≡</button>
+              </div>
+            </div>
+
+            <button type="button" class="tmpl" data-insert="\pmod{n}" data-cursor="1" data-i18n-title="tmpl.pmod.title">mod</button>
+            <button type="button" class="tmpl tmpl-sym" data-insert="\infty" data-cursor="0" data-i18n-title="tmpl.infty.title">∞</button>
+            <button type="button" class="tmpl" data-insert="\begin{array}{cc} a & b \\ c & d \end{array}" data-cursor="0" data-i18n-title="tmpl.table.title">table</button>
+            <button type="button" class="tmpl" data-insert="\left(a\right)" data-cursor="7" data-wrap-before="\left(" data-wrap-after="\right)" data-i18n-title="tmpl.parenAuto.title">( )</button>
+            <button type="button" class="tmpl" data-insert="\left[a\right]" data-cursor="7" data-wrap-before="\left[" data-wrap-after="\right]" data-i18n-title="tmpl.bracketAuto.title">[ ]</button>
+            <button type="button" class="tmpl" data-insert="\left\{a\right\}" data-cursor="8" data-wrap-before="\left\{" data-wrap-after="\right\}" data-i18n-title="tmpl.braceAuto.title">{ }</button>
+            <button type="button" class="tmpl" data-insert="\quad" data-cursor="0" data-i18n-title="tmpl.quad.title">\quad</button>
+          </div>
+
+          <div class="editor-wrap">
+            <div id="gutter" class="gutter">1</div>
+            <div class="input-stack">
+              <pre id="inputOverlay" class="input-overlay" aria-hidden="true"></pre>
+              <textarea id="input" data-i18n-aria-label="input.ariaLabel" spellcheck="false" wrap="off" placeholder="\int f'(x)g(x)=f(x)g(x)-\int f(x)g'(x)"></textarea>
+            </div>
+            <div id="suggestPopup" class="suggest-popup hidden" role="listbox" data-i18n-aria-label="suggestPopup.ariaLabel"></div>
+            <div id="bracketHighlightA" class="bracket-highlight-box hidden" aria-hidden="true"></div>
+            <div id="bracketHighlightB" class="bracket-highlight-box hidden" aria-hidden="true"></div>
+          </div>
+        </div>
+
+        <div class="splitter splitter-h" id="splitterH" data-i18n-title="layout.splitterH.title" role="separator" aria-orientation="horizontal" data-i18n-aria-label="layout.splitterH.ariaLabel" tabindex="0"></div>
+
+        <div class="output-part" id="outputPart">
+          <div class="settings">
+            <div class="field">
+              <label for="format" data-i18n="output.format">出力形式</label>
+              <select id="format">
+                <option value="svg">SVG</option>
+                <option value="png" selected>PNG</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="fontSize" data-i18n="output.fontSize">文字サイズ (px)</label>
+              <input id="fontSize" type="number" min="12" max="200" value="48" />
+            </div>
+
+            <div class="field">
+              <label for="scale" data-i18n="output.scale">解像度倍率</label>
+              <input id="scale" type="number" min="1" max="8" step="0.5" value="2" />
+            </div>
+
+            <div class="field">
+              <label for="paddingPx" data-i18n="output.paddingPx">余白 (px)</label>
+              <input id="paddingPx" type="number" min="0" max="200" step="1" value="24" />
+            </div>
+          </div>
+
+          <div class="settings settings-colors">
+            <div class="field">
+              <label for="fontColor" data-i18n="output.fontColor">文字色</label>
+              <input id="fontColor" type="color" value="#000000" />
+            </div>
+
+            <div class="field">
+              <label for="backgroundColor" data-i18n="output.backgroundColor">背景色</label>
+              <input id="backgroundColor" type="color" value="#ffffff" />
+            </div>
+          </div>
+
+          <label class="checkbox-field">
+            <input id="transparentBg" type="checkbox" />
+            <span data-i18n="output.transparentBg">背景を透過にする(PNG/SVG)</span>
+          </label>
+
+          <div class="actions">
+            <button id="btnCopy" data-i18n-title="actions.copy.title" data-i18n-aria-label="actions.copy.ariaLabel" data-i18n="actions.copy.text">クリップボードにコピー</button>
+            <button id="btnSave" data-i18n-title="actions.save.title" data-i18n-aria-label="actions.save.ariaLabel" data-i18n="actions.save.text">画像ファイルを保存...</button>
+            <div class="dropdown" id="otherCopyDropdown">
+              <button id="btnOtherCopy" type="button" class="secondary" aria-haspopup="true" aria-expanded="false" data-i18n-title="actions.otherCopy.title" data-i18n="actions.otherCopy.text">その他のコピー</button>
+              <div id="otherCopyMenu" class="dropdown-menu hidden" role="menu" data-i18n-aria-label="actions.otherCopy.title">
+                <button type="button" id="btnCopyUnicode" role="menuitem" data-i18n="actions.copyUnicode.text">Unicodeに変換してコピー</button>
+                <button type="button" id="btnCopyMathML" role="menuitem" data-i18n="actions.copyMathML.text">MathMLとしてコピー</button>
+              </div>
+            </div>
+            <button id="btnSaveSource" class="secondary" data-i18n-aria-label="actions.saveSource.ariaLabel" data-i18n="actions.saveSource.text">ソースを保存 (.tex)...</button>
+            <button id="btnSaveAsTemplate" class="secondary" data-i18n-aria-label="actions.saveAsTemplate.ariaLabel" data-i18n="actions.saveAsTemplate.text">現在のソースをテンプレートとして保存</button>
+            <button id="btnTemplateEditCancel" type="button" class="secondary hidden" data-i18n-title="actions.templateEditCancel.title" data-i18n-aria-label="actions.templateEditCancel.ariaLabel" data-i18n="actions.templateEditCancel.text">編集をキャンセル</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="splitter splitter-v" id="splitterV" data-i18n-title="layout.splitterV.title" role="separator" aria-orientation="vertical" data-i18n-aria-label="layout.splitterV.ariaLabel" tabindex="0"></div>
+
+      <section class="preview-pane" data-i18n-aria-label="preview.ariaLabel">
+        <div class="preview-toolbar">
+          <label data-i18n="preview.label">プレビュー</label>
+          <div class="zoom-controls">
+            <button id="zoomOut" class="icon-btn" type="button" data-i18n-title="preview.zoomOut.title" data-i18n-aria-label="preview.zoomOut.ariaLabel">−</button>
+            <span id="zoomLabel">100%</span>
+            <button id="zoomIn" class="icon-btn" type="button" data-i18n-title="preview.zoomIn.title" data-i18n-aria-label="preview.zoomIn.ariaLabel">＋</button>
+            <button id="zoomReset" class="icon-btn" type="button" data-i18n-title="preview.zoomReset.title" data-i18n-aria-label="preview.zoomReset.ariaLabel">⟲</button>
+          </div>
+        </div>
+        <div id="previewWrap" class="preview-wrap">
+          <div id="preview" class="preview"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ヘルプモーダル -->
+  <div id="helpOverlay" class="help-overlay hidden">
+    <div class="help-panel" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="help-header">
+        <h2 id="helpTitle"><span data-i18n="help.title">使い方・仕様</span> <span id="helpVersion" class="help-version"></span></h2>
+        <button id="btnHelpClose" class="icon-btn" type="button" data-i18n-title="help.close.title" data-i18n-aria-label="help.close.ariaLabel">✕</button>
+      </div>
+      <div class="help-body" id="helpBody" data-i18n-html="help.body">
+        <h3>基本の使い方</h3>
+        <ul>
+          <li>左上の入力欄に、1行につき1つの数式(LaTeX記法)を書きます。<code>$$</code>や<code>\begin{align}</code>は不要です。入力するとリアルタイムで右側にプレビューが表示されます。</li>
+          <li>複数行入力すると、左揃えで縦に並べて1枚の画像として合成されます。</li>
+          <li>1つの数式をコード上では読みやすく複数行に分けて書きつつ、画像側では改行させたくない場合は、その範囲を <code>\begin{nobreak}</code> と <code>\end{nobreak}</code>(それぞれ単独の行)で囲みます。間の行は空白区切りで1つの数式として結合され、1行として描画されます。<code>\begin{nobreak}</code>/<code>\end{nobreak}</code> 自体は本来のLaTeX記法ではなくこのアプリ独自のマーカーのため、画像には出力されません。</li>
+          <li>連続する複数行がそれぞれ <code>&amp;</code> を1つ以上含む場合、<code>\begin{align}</code>環境を書かなくても、その<code>&amp;</code>の位置を行同士で縦に揃えて描画します(align環境の見た目に近い動作。<code>&amp;</code>を含まない行が来ると揃えは区切られます)。</li>
+          <li>文章(日本語含む)を書きたい場合は <code>\text{ここに文章}</code> のように <code>\text{}</code> で囲みます。</li>
+          <li>数式は常に displaystyle(<code>$$...$$</code>相当の大きな表示)でレンダリングされます。</li>
+        </ul>
+
+        <h3>出力・保存</h3>
+        <ul>
+          <li><b>出力形式</b>: SVG / PNG から選べます。</li>
+          <li><b>クリップボードにコピー</b>: 選択中の形式に関わらず、常にPNGとしてラスタ画像をコピーします。</li>
+          <li><b>画像ファイルを保存...</b>: 選択中の形式でファイルとして保存します(保存するまでファイルは作られません)。デフォルトのファイル名は「Equashare image」です。</li>
+          <li><b>ソースを保存 (.tex)...</b>: 入力欄の数式だけをUTF-8の<code>.tex</code>テキストとして保存します。デフォルトのファイル名は「Equashare tex」です。</li>
+          <li><b>その他のコピー</b>: PNG画像としてのコピー以外に、数式をプレーンテキストへ変換してコピーする<b>Unicodeに変換してコピー</b>(上付き・下付き文字などをUnicodeの近い文字で表現します。対応する文字が無い場合は<code>^(...)</code>/<code>_(...)</code>という表記にフォールバックします)と、<b>MathMLとしてコピー</b>(Word等、MathMLの貼り付けに対応したアプリ向け)を選べます。</li>
+          <li>初めて保存するファイルはEquashareホームディレクトリ(下記参照)を初期の保存先とし、以降の保存はディレクトリを問わず直前に保存した場所を記憶します。</li>
+        </ul>
+
+        <h3>入力補助</h3>
+        <ul>
+          <li><b>ユーザーテンプレートを挿入</b>: 自分で保存したテンプレートをカーソル位置に挿入します。</li>
+          <li><b>現在のソースをテンプレートとして保存</b>: 入力欄の内容をテンプレートとして保存します。名前を入力するポップアップが表示され、同じ名前で保存すると上書きされます。管理(名前の編集・削除)は設定(⚙)内の「テンプレートを管理」から行えます。</li>
+          <li><b>サンプルを挿入</b>: よく使う数式のひな形をカーソル位置に挿入します。</li>
+          <li><b>分数・√・x^y など</b>の「よく使う記法」ボタン: クリックでカーソル位置にスニペットを挿入します。</li>
+          <li><b>サジェスト</b>: 入力欄で <code>\</code> を入力すると、対応するLaTeXコマンドと入力済みの<code>\newcommand</code>マクロの候補がポップアップします。候補には実際に挿入される<code>{}</code>や<code>_{}^{}</code>等も表示され、インテグラル(<code>\int</code>系)・シグマ・ラージパイ・極限(<code>\lim</code>系)などは、素のコマンドと添字付き(例: <code>\int</code> と <code>\int_{}^{}</code>)の両方が候補に出ます。上下キーで選択、Tab/Enterで確定、Escで閉じます。設定(⚙)からON/OFFできます。</li>
+          <li><b>Tabキーでスペース挿入</b>: 入力欄にカーソルがある状態で <code>Tab</code> を押すと、カーソル位置にスペースが挿入されます(サジェスト候補の表示中はTabで確定が優先されます)。挿入するスペースの数は設定(⚙)の「Tabキーで挿入するスペース数」から変更できます。</li>
+          <li>入力欄の左側に行番号を表示します。MathJaxが解釈できない行は<span class="err-sample">赤色</span>で示され、その行のプレビューにも赤字で「Syntax Error」と1行だけ表示されます(その行だけがエラー表示になり、他の行の表示は継続します)。</li>
+        </ul>
+
+        <h3>Webページ上のLaTeXを開く</h3>
+        <ul>
+          <li>Webページ上でLaTeX数式(MathJax等で描画済みのもの)を選択して右クリックすると、「Equashareで簡易表示」(簡易入力ポップアップに読み込む)と「Equashareで表示」(Equashareのタブを開く/切り替えて読み込む)が選べます。選択範囲の見た目のテキストではなく、ページのDOMから元のLaTeXソースを抽出するため、<code>^2</code>や<code>\sqrt</code>等の記法がそのまま復元されます。</li>
+          <li>ページ側(MathJax等)が数式への右クリックに独自メニューを表示する設定になっていると、ブラウザの標準の右クリックメニュー自体が表示できずこの機能が使えないことがあります。その場合は下記のショートカットでも同じ抽出ロジックが使えます。</li>
+        </ul>
+
+        <h3>プレビュー操作</h3>
+        <ul>
+          <li>ズームボタン、または <code>Ctrl</code>+マウスホイールで拡大縮小できます。</li>
+          <li>プレビュー領域をドラッグするとパン(視点移動)できます。</li>
+        </ul>
+
+        <h3>キーボードショートカット</h3>
+        <ul>
+          <li><code>Ctrl(⌘)+S</code>: 画像ファイルを保存</li>
+          <li><code>Ctrl(⌘)+Shift+C</code>: クリップボードにコピー</li>
+          <li><code>Ctrl(⌘)+Z</code>: 元に戻す(入力欄)</li>
+          <li><code>Ctrl(⌘)+Y</code> または <code>Ctrl(⌘)+Shift+Z</code>: やり直し(入力欄)</li>
+          <li><code>Ctrl+Shift+E</code>(既定値): ブラウザ上で数式を選択した状態で押すと、デスクトップ版Equashare(v5.0.0以降、一度起動して連携が設定済みの場合)の簡易入力ポップアップへその数式を直接送ります。連携が未設定・送信失敗・選択なしの場合は、拡張機能自身の簡易入力ポップアップにフォールバックします。ブラウザの拡張機能ショートカットとして登録されているため、キーの変更は設定(⚙)の「簡易入力ポップアップのショートカット」からChromeの拡張機能ショートカット設定画面を開いて行います(拡張機能の仕様上、この画面から直接キーを記録することはできません)。ブラウザにフォーカスがある間のみ動作します。</li>
+        </ul>
+
+        <h3>レイアウト</h3>
+        <ul>
+          <li>入力欄と設定欄の間の境界線(横線)をドラッグすると、それぞれの高さを調整できます。</li>
+          <li>左側の編集パネルとプレビューの間の境界線(縦線)をドラッグすると、幅を調整できます。</li>
+          <li>これらのサイズやテーマ(ライト/ダーク)、最後に保存したフォルダは次回起動時も記憶されます。</li>
+        </ul>
+
+        <h3>未保存表示・下書きの自動保存</h3>
+        <ul>
+          <li>未保存の変更があるとタブのタイトルの先頭に <code>●</code> が付きます。ソースを保存すると消えます。</li>
+          <li>未保存の変更がある状態でタブを閉じる・リロードしようとすると、ブラウザ標準の確認ダイアログが表示されます(この確認自体は常時有効で、デスクトップ版のような設定項目はありません)。</li>
+          <li>これとは別に、入力するたびに内容が自動的に下書きとして保存されており、設定(⚙)の「起動時の状態」を「前回のソースを開く」にしていれば、次回タブを開いたときに自動で復元されます。</li>
+        </ul>
+
+        <h3>設定(⚙)</h3>
+        <ul>
+          <li><b>言語</b>: 日本語 / English を切り替えられます。</li>
+          <li><b>UIサイズ</b>: アプリ全体の文字サイズ・ボタンサイズを一括で調整できます。<b>よく使う記法・保存/コピー等ボタンのサイズ</b>はこれとは別に調整できます。</li>
+          <li><b>サジェスト</b> / <b>デフォルトテキスト</b>(起動時にサンプル数式を自動投入するか) のON/OFF</li>
+          <li><b>起動時の状態</b>: デフォルトの状態で起動(既定) / 前回のソースを開く(自動保存された下書きを復元)</li>
+          <li><b>選択範囲を括弧で囲む</b>: ONの場合、入力欄でテキストを選択した状態で <code>(</code> <code>[</code> <code>{</code> などを押すと、選択範囲をその括弧で囲みます(OFFの場合は選択範囲を置き換えます)。</li>
+          <li><b>Tabキーで挿入するスペース数</b> / <b>履歴の保持件数</b>(コピー・保存操作の履歴として保持する件数): 数値で指定します。</li>
+          <li><b>簡易入力ポップアップのショートカット</b>: 現在割り当てられているキーを表示します。「変更...」を押すとChromeの拡張機能ショートカット設定画面が開きます(拡張機能の仕様上、この画面から直接キーを記録することはできません)。</li>
+          <li><b>既定の出力設定(起動時)</b>: 出力形式・文字サイズ・解像度倍率・余白・背景の透過有無の初期値をここで設定できます。ここでの変更は次回起動時から適用され、起動中に上部の出力設定欄で変えた内容とは独立です。</li>
+          <li><b>テンプレートを管理</b>: 保存したユーザーテンプレートの一覧・編集・削除。管理画面右上のボタンから、テンプレート一式をファイルへエクスポート/ファイルからインポートできます。インポート時に同名のテンプレートがある場合は、上書きする・名前を変更して追加する・インポートをキャンセルする、のいずれかを選べます。</li>
+        </ul>
+
+        <h3>対応しているLaTeX記法(制限事項)</h3>
+        <p>
+          バンドルサイズ軽量化のため、MathJaxの全パッケージではなく以下のパッケージのみを
+          読み込んでいます。
+        </p>
+        <ul>
+          <li><code>base</code>: 基本的な数式・分数・根号・添字・ギリシャ文字・行列/表環境・<code>\left \right</code>など</li>
+          <li><code>ams</code>: AMS-LaTeXの記法(<code>\dfrac</code>、<code>\begin{pmatrix}</code>、<code>\text</code>、各種矢印など)</li>
+          <li><code>boldsymbol</code>: <code>\boldsymbol{}</code>(数式太字)</li>
+          <li><code>color</code>: <code>\color{}</code>(文字色)</li>
+          <li><code>mathtools</code>: <code>amsmath</code>の拡張記法</li>
+          <li><code>newcommand</code>: <code>\newcommand</code>によるマクロ定義</li>
+        </ul>
+        <p>
+          <code>src/mathRender.ts</code>の<code>MATH_PACKAGES</code>配列に追加することで追加可能です。
+        </p>
+
+        <h3>日本語フォントについて</h3>
+        <p>
+          <code>\text{}</code>内の日本語は同梱フォント(Noto Serif JP)のアウトラインを直接埋め込むため、
+          実行環境に日本語フォントが無くても正しく表示されます。フォント自体は初めて日本語を含む行を
+          入力したタイミングで読み込まれるため、日本語を使わない場合は読み込まれません。
+        </p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 設定モーダル -->
+  <div id="settingsOverlay" class="help-overlay hidden">
+    <div id="settingsPanel" class="help-panel settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="help-header">
+        <h2 id="settingsTitle" data-i18n="settings.title">設定</h2>
+        <div class="help-header-actions">
+          <button id="btnTemplateImport" class="icon-btn hidden" type="button" data-i18n-title="templateManage.import.title" data-i18n-aria-label="templateManage.import.ariaLabel">⇪</button>
+          <button id="btnTemplateExport" class="icon-btn hidden" type="button" data-i18n-title="templateManage.export.title" data-i18n-aria-label="templateManage.export.ariaLabel">⇩</button>
+          <button id="btnSettingsClose" class="icon-btn" type="button" data-i18n-title="settings.close.title" data-i18n-aria-label="settings.close.ariaLabel">✕</button>
+        </div>
+      </div>
+      <div class="help-body">
+        <div id="settingsListView">
+          <h3 class="settings-section-title" data-i18n="settings.display.title">表示</h3>
+          <div class="settings-row">
+            <label for="settingLanguage" data-i18n="settings.language">言語</label>
+            <select id="settingLanguage">
+              <option value="ja">日本語</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label for="settingUiScale" data-i18n="settings.uiScale">UIサイズ(文字・ボタン)</label>
+            <div class="range-field">
+              <input id="settingUiScale" type="range" min="70" max="150" step="5" value="100" />
+              <span id="settingUiScaleLabel" class="range-value">100%</span>
+            </div>
+          </div>
+          <div class="settings-row">
+            <label for="settingTmplScale" data-i18n="settings.tmplScale">よく使う記法・保存/コピー等ボタンのサイズ</label>
+            <div class="range-field">
+              <input id="settingTmplScale" type="range" min="70" max="150" step="5" value="100" />
+              <span id="settingTmplScaleLabel" class="range-value">100%</span>
+            </div>
+          </div>
+
+          <div class="settings-row">
+            <label for="settingSuggest" data-i18n="settings.suggest">サジェスト</label>
+            <button id="settingSuggest" type="button" class="toggle-btn" aria-pressed="true">ON</button>
+          </div>
+          <div class="settings-row">
+            <label for="settingDefaultText" data-i18n="settings.defaultText">デフォルトテキスト</label>
+            <button id="settingDefaultText" type="button" class="toggle-btn" aria-pressed="true">ON</button>
+          </div>
+          <div class="settings-row">
+            <label for="settingStartupMode" data-i18n="settings.startupMode">起動時の状態</label>
+            <select id="settingStartupMode">
+              <option value="default" data-i18n="settings.startupMode.default">デフォルトの状態で起動</option>
+              <option value="lastSource" data-i18n="settings.startupMode.lastSource">前回のソースを開く</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label for="settingBracketWrapSelection" data-i18n="settings.bracketWrapSelection">選択範囲を括弧で囲む</label>
+            <button id="settingBracketWrapSelection" type="button" class="toggle-btn" aria-pressed="true">ON</button>
+          </div>
+          <div class="settings-row">
+            <label for="settingTabSize" data-i18n="settings.tabSize">Tabキーで挿入するスペース数</label>
+            <input id="settingTabSize" type="number" min="1" max="16" step="1" />
+          </div>
+          <div class="settings-row">
+            <label for="settingHistoryLimit" data-i18n="settings.historyLimit">履歴の保持件数</label>
+            <input id="settingHistoryLimit" type="number" min="5" max="20" step="1" />
+          </div>
+          <div class="settings-row settings-row-dir">
+            <label data-i18n="settings.hotkey">簡易入力ポップアップのショートカット</label>
+            <div class="dir-picker">
+              <input id="settingHotkeyDisplay" type="text" readonly value="Ctrl+Shift+E" />
+              <button id="btnChangeHotkey" type="button" class="secondary" data-i18n="settings.hotkey.change">変更...</button>
+            </div>
+          </div>
+          <p class="settings-section-desc" data-i18n="settings.hotkey.desc">Chromeの拡張機能ショートカット設定画面が開きます(ブラウザにフォーカスがある間だけ動作します)。</p>
+
+          <h3 class="settings-section-title" data-i18n="settings.outputDefaults.title">既定の出力設定(起動時)</h3>
+          <p class="settings-section-desc" data-i18n="settings.outputDefaults.desc">起動のたびにこの内容へ初期化されます(セッション中の変更は次回起動時にリセットされます)。</p>
+          <div class="settings-row">
+            <label for="settingDefaultFormat" data-i18n="output.format">出力形式</label>
+            <select id="settingDefaultFormat">
+              <option value="svg">SVG</option>
+              <option value="png">PNG</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <label for="settingDefaultFontSize" data-i18n="output.fontSize">文字サイズ (px)</label>
+            <input id="settingDefaultFontSize" type="number" min="12" max="200" />
+          </div>
+          <div class="settings-row">
+            <label for="settingDefaultScale" data-i18n="output.scale">解像度倍率</label>
+            <input id="settingDefaultScale" type="number" min="1" max="8" step="0.5" />
+          </div>
+          <div class="settings-row">
+            <label for="settingDefaultPaddingPx" data-i18n="output.paddingPx">余白 (px)</label>
+            <input id="settingDefaultPaddingPx" type="number" min="0" max="200" step="1" />
+          </div>
+          <div class="settings-row">
+            <label for="settingDefaultTransparentBg" data-i18n="output.transparentBg">背景を透過にする</label>
+            <button id="settingDefaultTransparentBg" type="button" class="toggle-btn" aria-pressed="false">OFF</button>
+          </div>
+
+          <button id="btnManageTemplates" type="button" class="secondary settings-nav-btn" data-i18n="settings.manageTemplates">テンプレートを管理 ›</button>
+        </div>
+
+        <div id="templateManageView" class="hidden">
+          <div class="template-manage-header">
+            <button id="btnTemplateManageBack" type="button" class="icon-btn" data-i18n-title="templateManage.back.title" data-i18n-aria-label="templateManage.back.ariaLabel">←</button>
+            <h3 data-i18n="templateManage.heading">テンプレートを管理</h3>
+          </div>
+          <div id="templateManageList" class="template-list"></div>
+          <p id="templateManageEmpty" class="template-manage-empty hidden" data-i18n="templateManage.empty">保存されたテンプレートはありません。</p>
+          <input id="templateImportInput" type="file" accept="application/json,.json" class="hidden" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 汎用確認モーダル(削除確認など) -->
+  <div id="confirmOverlay" class="help-overlay hidden">
+    <div class="help-panel confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="help-header">
+        <h2 id="confirmTitle" data-i18n="confirm.title">確認</h2>
+      </div>
+      <div class="help-body">
+        <p id="confirmMessage"></p>
+        <div class="modal-actions">
+          <button id="btnConfirmOk" type="button"></button>
+          <button id="btnConfirmCancel" type="button" class="secondary" data-i18n="confirm.cancel">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- テンプレート名入力モーダル -->
+  <div id="templateNamePromptOverlay" class="help-overlay hidden">
+    <div class="help-panel confirm-panel" role="dialog" aria-modal="true" aria-labelledby="templateNamePromptTitle">
+      <div class="help-header">
+        <h2 id="templateNamePromptTitle" data-i18n="templateNamePrompt.title">テンプレート名を入力してください</h2>
+      </div>
+      <div class="help-body">
+        <input id="templateNameInput" type="text" class="template-name-input" data-i18n-aria-label="templateNamePrompt.ariaLabel" />
+        <div class="modal-actions">
+          <button id="btnTemplateNameConfirm" type="button" data-i18n="templateNamePrompt.save">保存</button>
+          <button id="btnTemplateNameCancel" type="button" class="secondary" data-i18n="templateNamePrompt.cancel">キャンセル</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- テンプレートインポート時、同名テンプレートがあった場合の3択モーダル -->
+  <div id="templateImportConflictOverlay" class="help-overlay hidden">
+    <div class="help-panel confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="templateImportConflictTitle">
+      <div class="help-header">
+        <h2 id="templateImportConflictTitle" data-i18n="templateImportConflict.title">同名のテンプレートがあります</h2>
+      </div>
+      <div class="help-body">
+        <p id="templateImportConflictMessage" style="white-space: pre-line;"></p>
+        <div class="modal-actions modal-actions-vertical">
+          <button id="btnImportConflictOverwrite" type="button" data-i18n="templateImportConflict.overwrite">上書きする</button>
+          <button id="btnImportConflictRename" type="button" class="secondary" data-i18n="templateImportConflict.rename">名前を変更して追加</button>
+          <button id="btnImportConflictCancel" type="button" class="secondary" data-i18n="templateImportConflict.cancel">インポートをキャンセル</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 履歴パネル(数式・出力の履歴、コピー/保存操作をトリガーに記録) -->
+  <div id="historyOverlay" class="help-overlay hidden">
+    <div id="historyPanel" class="help-panel history-panel" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+      <div class="help-header">
+        <h2 id="historyTitle" data-i18n="history.title">履歴</h2>
+        <button id="btnHistoryClose" class="icon-btn" type="button" data-i18n-title="history.close.title" data-i18n-aria-label="history.close.ariaLabel">✕</button>
+      </div>
+      <div class="help-body">
+        <div id="historyList" class="template-list"></div>
+        <p id="historyEmpty" class="template-manage-empty hidden" data-i18n="history.empty">まだ履歴はありません(コピーまたは保存すると記録されます)。</p>
+        <button id="btnHistoryClearAll" type="button" class="secondary btn-danger history-clear-all hidden" data-i18n="history.clearAll">履歴をすべて削除</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

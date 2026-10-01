@@ -1,0 +1,1235 @@
+:root,
+:root[data-theme='dark'] {
+  --bg: #1e1f22;
+  --panel: #26282c;
+  --border: #383a40;
+  --text: #e6e6e6;
+  --muted: #9a9ca1;
+  --accent: #4f8cff;
+  --accent-hover: #6fa1ff;
+  --danger: #e04040;
+  --success: #56c98a;
+  --checker-a: #2c2d31;
+  --checker-b: #232427;
+}
+
+:root[data-theme='light'] {
+  --bg: #f5f6f8;
+  --panel: #ffffff;
+  --border: #d9dce1;
+  --text: #1c1d1f;
+  --muted: #6b6e76;
+  --accent: #3568d4;
+  --accent-hover: #2952b3;
+  --danger: #c62828;
+  --success: #1f8a55;
+  --checker-a: #e8e9ec;
+  --checker-b: #f5f6f8;
+}
+
+/* UIサイズ調整(v3.0, 設定 > UIサイズ)。--ui-scale はアプリ全体の文字サイズ・
+ * ボタンサイズ(よく使う記法・保存/コピー等ボタンを除く)、--tmpl-scale はよく使う記法
+ * ボタンと保存/コピー等のボタン(.actions内)専用。どちらも1 = 100%。
+ * transform:scale()やzoomではなく実際のfont-size/padding等をcalc()で変更する方式を
+ * 採用している。理由: 入力欄のキャレット位置計算(getMonospaceCharWidthPx等)は
+ * getComputedStyle()で読んだ実際のfont-sizeを基準に文字幅を実測しており、
+ * transform/zoomでは見た目のサイズとgetComputedStyleの値がズレて座標計算が
+ * 壊れるため。 */
+:root {
+  --ui-scale: 1;
+  --tmpl-scale: 1;
+}
+
+* { box-sizing: border-box; }
+
+/* スクロールバーのテーマ対応。色をハードコードせず、data-theme='dark'/'light'共通の
+   テーマ変数を使う。WebView2はChromiumベースのため::-webkit-scrollbar系も効く。 */
+* {
+  scrollbar-color: var(--border) var(--panel);
+  scrollbar-width: thin;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--panel);
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Sans", sans-serif;
+  font-size: calc(var(--ui-scale) * 14px);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
+}
+
+.titlebar h1 {
+  font-size: calc(var(--ui-scale) * 15px);
+  font-weight: 600;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unsaved-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.status {
+  font-size: calc(var(--ui-scale) * 12px);
+  color: var(--muted);
+  min-height: 1.2em;
+  flex: 1;
+}
+
+.status.ok { color: var(--success); }
+.status.err { color: var(--danger); }
+
+.icon-btn {
+  -webkit-app-region: no-drag;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: calc(var(--ui-scale) * 30px);
+  height: calc(var(--ui-scale) * 30px);
+  padding: 0;
+  border-radius: 6px;
+  font-size: calc(var(--ui-scale) * 14px);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn:hover { background: var(--panel); }
+
+.main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 380px;
+  min-width: 260px;
+  max-width: 75vw;
+  overflow: hidden;
+}
+
+.coding-part {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 10px 14px;
+  flex: 1 1 auto;
+  min-height: 140px;
+  overflow-y: auto;
+}
+
+.output-part {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 14px 14px 14px;
+  flex: 0 0 auto;
+  min-height: 120px;
+  overflow-y: auto;
+}
+
+.splitter {
+  flex: 0 0 auto;
+  background: transparent;
+  position: relative;
+  z-index: 2;
+}
+
+.splitter::after {
+  content: '';
+  position: absolute;
+  background: var(--border);
+}
+
+.splitter-h {
+  height: 9px;
+  margin: -4px 14px 0 14px;
+  cursor: row-resize;
+}
+.splitter-h::after {
+  left: 0; right: 0; top: 4px; height: 1px;
+}
+.splitter-h:hover::after, .splitter-h.active::after {
+  background: var(--accent);
+  height: 2px;
+  top: 3.5px;
+}
+
+.splitter-v {
+  width: 9px;
+  cursor: col-resize;
+  border-right: 1px solid var(--border);
+}
+.splitter-v::after {
+  top: 0; bottom: 0; left: 4px; width: 1px;
+}
+.splitter-v:hover::after, .splitter-v.active::after {
+  background: var(--accent);
+  width: 2px;
+  left: 3.5px;
+}
+
+label {
+  font-size: calc(var(--ui-scale) * 12px);
+  color: var(--muted);
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.editor-toolbar select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: calc(var(--ui-scale) * 12px);
+  max-width: 55%;
+}
+
+.template-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-buttons button.tmpl {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: calc(var(--tmpl-scale) * 4px) calc(var(--tmpl-scale) * 9px);
+  font-size: calc(var(--tmpl-scale) * 12px);
+  font-weight: 500;
+  font-family: "Cascadia Code", "Consolas", monospace;
+}
+
+.template-buttons button.tmpl:hover { background: var(--border); }
+
+/* ∞ など記号1文字だけのボタンは、他の文字ボタンと同じ見た目(padding等)を保ったまま
+   記号自体を少し大きく見せるための修飾。既存レイアウト(ボタンの折り返し・間隔)には
+   影響しない。 */
+.template-buttons button.tmpl-sym {
+  font-size: calc(var(--tmpl-scale) * 15px);
+  line-height: 1;
+}
+
+/* ベクトル矢印ボタン(AB の上に→を重ねて \overrightarrow{} の見た目を表現) */
+.template-buttons button.vector-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: calc(var(--tmpl-scale) * 2px) calc(var(--tmpl-scale) * 9px) calc(var(--tmpl-scale) * 4px) calc(var(--tmpl-scale) * 9px);
+  gap: 0;
+}
+.vector-btn .vector-arrow {
+  font-size: calc(var(--tmpl-scale) * 11px);
+  transform: scaleX(1.3);
+  margin-bottom: -2px;
+}
+.vector-btn .vector-base {
+  font-size: calc(var(--tmpl-scale) * 12px);
+}
+
+/* 比較演算子ドロップダウン(=ボタンをホバー/Enterで展開) */
+.tmpl-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+/* 「=」は他のよく使う記法ボタン(∞など)と同じ.tmpl-symの15pxを踏襲していたが、
+ * グリフ自体が横線だけで縦方向の占有が少なく、他のボタンより小さく見えるという指摘が
+ * あった(v3.0)。font-sizeを17pxまで上げ、font-weightも太くして視認性を揃える。 */
+.tmpl-dropdown button.tmpl-trigger {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: calc(var(--tmpl-scale) * 4px) calc(var(--tmpl-scale) * 9px);
+  font-size: calc(var(--tmpl-scale) * 17px);
+  line-height: 1;
+  font-weight: 700;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  cursor: pointer;
+}
+.tmpl-dropdown button.tmpl-trigger:hover { background: var(--border); }
+
+/* position: fixed にすることで、祖先の overflow:hidden/auto (.coding-part / .editor-pane)
+   によるクリップを回避する(position:fixedの containing block はビューポート自身になるため、
+   祖先にtransform等が無い限りoverflowクリップの影響を受けない)。
+   top/leftはCSSのtop:100%ではなく、開くタイミングでJS側(positionEqMenu)がgetBoundingClientRect
+   を使って計算する。 */
+.tmpl-dropdown-menu {
+  display: none;
+  position: fixed;
+  padding: 5px;
+  gap: 4px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.tmpl-dropdown-menu.open {
+  display: flex;
+}
+
+.tmpl-dropdown-menu button.tmpl {
+  min-width: calc(var(--tmpl-scale) * 28px);
+  text-align: center;
+}
+
+.editor-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 160px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--panel);
+  position: relative;
+}
+
+.gutter {
+  flex-shrink: 0;
+  padding: 10px 0;
+  text-align: right;
+  color: var(--muted);
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: calc(var(--ui-scale) * 13px);
+  line-height: 1.6;
+  user-select: none;
+  overflow: hidden;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+.gutter-line {
+  padding: 0 8px;
+}
+
+.gutter-line-error {
+  background: var(--danger);
+  color: white;
+}
+
+.input-stack {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  min-height: 160px;
+}
+
+/* #inputOverlay と textarea#input は同一のフォント/行間/パディングでぴったり重ねる。
+   スタイルがずれると文字の色分けと実際の文字位置がずれてしまうため、変更する場合は
+   両方に同じ値を反映すること。 */
+.input-overlay,
+textarea#input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 10px;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: calc(var(--ui-scale) * 13px);
+  line-height: 1.6;
+  /* 自動折り返しを止め、論理行1行=表示1行を保証する(wrap="off"属性と対にする)。
+     折り返しがあるとgutter側の行番号(1行=1div)や#inputOverlayの色分けとズレるため。
+     長い行は横スクロールで読む。 */
+  white-space: pre;
+}
+
+.input-overlay {
+  color: var(--text);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ネストの深さによる括弧の色分け(2.2)。VSCodeの「Bracket Pair Colorizer」拡張の
+   デフォルト配色 Gold/Orchid/LightSkyBlue を踏襲しつつ、このアプリのダーク/ライト
+   双方の背景での視認性を見て微調整した値。 */
+.bracket-depth-0 { color: #e0b23a; }
+.bracket-depth-1 { color: #c586c5; }
+.bracket-depth-2 { color: #5cb3e0; }
+.bracket-unmatched {
+  color: var(--danger);
+  text-decoration: underline wavy var(--danger);
+}
+
+textarea#input {
+  z-index: 1;
+  height: 100%;
+  resize: none;
+  background: transparent;
+  /* 文字色そのものは透明化し、キャレット(カーソル)の色だけ残す。実際に見えている
+     色付き文字は背後の#inputOverlayが描画したもの。 */
+  color: transparent;
+  caret-color: var(--text);
+  border: none;
+  overflow-x: auto;
+}
+
+textarea#input:focus {
+  outline: none;
+}
+
+select:focus, input:focus, textarea:focus, button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.settings-colors {
+  margin-top: -2px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(var(--ui-scale) * 12px);
+  color: var(--muted);
+  margin-top: -2px;
+  cursor: pointer;
+}
+
+.checkbox-field input[type="checkbox"] {
+  flex-shrink: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field input, .field select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: calc(var(--ui-scale) * 13px);
+}
+
+.field input[type="color"] {
+  padding: 2px;
+  height: 32px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* button.secondary の margin-top はここでは不要(gapだけで等間隔にするため打ち消す) */
+.actions button.secondary {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* その他のコピー(Unicodeに変換 / MathML)ドロップダウン                     */
+/* ---------------------------------------------------------------------- */
+.dropdown {
+  position: relative;
+}
+
+/* .actionsのflex-stretchは直接の子(このdiv自体)までしか幅を揃えない。中の
+ * トリガーボタンは自分でwidth:100%を持たないと縮んでしまうため、他の.actions
+ * button(クリップボードにコピー/保存等)と横幅を揃えるために明示する。 */
+#btnOtherCopy {
+  width: 100%;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  padding: 4px;
+}
+
+.dropdown-menu.hidden {
+  display: none;
+}
+
+.dropdown-menu button {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+  background: transparent;
+  color: var(--text);
+  border: none;
+}
+
+.dropdown-menu button:hover {
+  background: var(--accent);
+  color: white;
+}
+
+button {
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: calc(var(--ui-scale) * 10px) calc(var(--ui-scale) * 12px);
+  font-size: calc(var(--ui-scale) * 13px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+/* 「よく使う記法と保存やコピー等のボタンは別のパラメータで設定される」(v3.0)。
+ * .actions は クリップボードにコピー/画像ファイルを保存/ソースを保存/テンプレートとして
+ * 保存/編集をキャンセル の5ボタンだけを含むため、ここだけ base の button{} を
+ * --tmpl-scale で上書きする(詳細度 .actions button > button によりこちらが勝つ)。 */
+.actions button {
+  padding: calc(var(--tmpl-scale) * 10px) calc(var(--tmpl-scale) * 12px);
+  font-size: calc(var(--tmpl-scale) * 13px);
+}
+
+button:hover { background: var(--accent-hover); }
+button.secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  margin-top: 4px;
+}
+button.secondary:hover { background: var(--panel); }
+button:disabled {
+  background: #4a4c52;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+/* button.secondary:hover (詳細度0,0,2,1) が button:disabled (詳細度0,0,1,1) より詳細度で
+ * 上回るため、.secondaryクラス付きボタンだけ無効化中もhoverで色が変わってしまう。
+ * .secondaryの有無に関わらず無効化中のhoverを統一的に暗くする。 */
+button:disabled:hover { background: #4a4c52; }
+:root[data-theme='light'] button:disabled {
+  /* ライトモードでは暗い灰色だと浮くため、雰囲気に合う明るい灰色にする */
+  background: #c8ccd4;
+  color: #8a8e96;
+}
+:root[data-theme='light'] button:disabled:hover {
+  /* 上のbutton:disabled:hoverが暗い灰色を強制するため、ライトモードでは基調色に揃えて上書きする */
+  background: #c8ccd4;
+}
+button.btn-success {
+  background: var(--success);
+  color: #fff;
+  border: none;
+}
+button.btn-success:hover { filter: brightness(1.08); }
+button.btn-success:disabled {
+  background: #4a4c52;
+  color: var(--muted);
+  filter: none;
+}
+:root[data-theme='light'] button.btn-success:disabled {
+  background: #c8ccd4;
+  color: #8a8e96;
+}
+button.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border: none;
+}
+button.btn-danger:hover { filter: brightness(1.08); }
+button.btn-danger:disabled {
+  background: #4a4c52;
+  color: var(--muted);
+  filter: none;
+}
+:root[data-theme='light'] button.btn-danger:disabled {
+  background: #c8ccd4;
+  color: #8a8e96;
+}
+
+.hidden { display: none !important; }
+
+.preview-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 200px;
+  padding: 14px;
+  min-height: 0;
+}
+
+.preview-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zoom-controls span {
+  font-size: calc(var(--ui-scale) * 12px);
+  color: var(--muted);
+  min-width: 3.5em;
+  text-align: center;
+}
+
+.preview-wrap {
+  flex: 1;
+  overflow: auto;
+  background:
+    linear-gradient(45deg, var(--checker-a) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-a) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  background-color: var(--checker-b);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: 20px;
+  cursor: grab;
+}
+
+.preview-wrap.panning {
+  cursor: grabbing;
+}
+
+.preview {
+  transition: transform 0.06s ease-out;
+}
+
+.preview svg {
+  display: block;
+  max-width: none;
+  overflow: visible;
+}
+
+/* ---------------------------------------------------------------------- */
+/* ヘルプモーダル                                                          */
+/* ---------------------------------------------------------------------- */
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 40px;
+}
+
+.help-panel {
+  background: var(--bg);
+  border: none;
+  border-radius: 10px;
+  max-width: 720px;
+  width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 設定モーダルのヘッダー内、✕(閉じる)ボタンの左側に並べるアクション群
+ * (テンプレート管理表示中だけ現れるインポート/エクスポートボタン)。h2とこの
+ * div自体の2要素だけを.help-headerのjustify-content:space-betweenの対象にすることで、
+ * 中の複数ボタンは互いに詰めて並び、常に✕ボタンのすぐ左に位置する。 */
+.help-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.help-header-actions .icon-btn.hidden {
+  display: none;
+}
+
+.help-header h2 {
+  margin: 0;
+  font-size: calc(var(--ui-scale) * 16px);
+}
+
+.help-version {
+  font-size: calc(var(--ui-scale) * 12px);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.help-body {
+  padding: 4px 22px 22px 22px;
+  overflow-y: auto;
+  line-height: 1.7;
+  font-size: calc(var(--ui-scale) * 13px);
+}
+
+.help-body h3 {
+  font-size: calc(var(--ui-scale) * 13px);
+  color: var(--accent);
+  margin: 18px 0 6px 0;
+}
+
+.help-body h3:first-child {
+  margin-top: 14px;
+}
+
+.help-body ul {
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+.help-body li {
+  margin-bottom: 4px;
+}
+
+.help-body code {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: calc(var(--ui-scale) * 12px);
+}
+
+.help-body .err-sample {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.help-body p {
+  margin: 6px 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* サジェストポップアップ (\ 入力時のコマンド補完)                          */
+/* ---------------------------------------------------------------------- */
+
+.suggest-popup {
+  position: fixed;
+  z-index: 1000;
+  min-width: 160px;
+  max-width: 320px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  padding: 4px;
+}
+
+/* キャレットが隣接/内包している括弧ペアを囲む枠線(2.2)。#bracketHighlightA/Bの2つを
+   開き括弧・閉じ括弧それぞれに配置する(未対応の括弧1つだけの場合はBを隠す)。
+   suggest-popupと同様、祖先のoverflow:hidden/auto (.coding-part / .editor-pane)による
+   クリップを避けるためposition:fixedで、JS側(positionBracketHighlights)が
+   getBoundingClientRect相当の計算結果でtop/leftを設定する。 */
+.bracket-highlight-box {
+  position: fixed;
+  z-index: 5;
+  box-sizing: border-box;
+  border: 1.5px solid var(--accent);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.bracket-highlight-box.bracket-highlight-unmatched {
+  border-color: var(--danger);
+}
+
+.suggest-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: calc(var(--ui-scale) * 12.5px);
+  cursor: pointer;
+  color: var(--text);
+}
+
+.suggest-item .suggest-item-source {
+  font-family: inherit;
+  font-size: calc(var(--ui-scale) * 10.5px);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.suggest-item:hover,
+.suggest-item.active {
+  background: var(--accent);
+  color: white;
+}
+
+.suggest-item:hover .suggest-item-source,
+.suggest-item.active .suggest-item-source {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 設定モーダル                                                            */
+/* ---------------------------------------------------------------------- */
+
+.settings-panel {
+  max-width: 480px;
+}
+
+/* テンプレート管理ビューを開いている間だけ、モーダル自体を大きくする
+ * (プレビューサムネイルが小さすぎて見づらいという指摘への対応)。 */
+.settings-panel.template-manage-active {
+  max-width: 960px;
+}
+
+/* 履歴パネル: .template-item(220px幅サムネイル+テキスト+ボタン3つ)を横並びで
+ * 収めるため、.help-panelの既定720pxではなく.template-manage-activeと
+ * 同じ960pxを常時使う(履歴は常にサムネイル付き一覧を表示するため)。
+ * .help-panelとの複合セレクタにして、既存の.settings-panel.template-manage-active
+ * と同じ詳細度にしておく(単一クラスだとソース順依存になり事故りやすいため)。 */
+.help-panel.history-panel {
+  max-width: 960px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-row:last-of-type {
+  border-bottom: none;
+}
+
+.settings-row label {
+  color: var(--text);
+  font-size: calc(var(--ui-scale) * 13px);
+}
+
+.settings-row select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: calc(var(--ui-scale) * 13px);
+}
+
+.settings-row input[type='number'] {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: calc(var(--ui-scale) * 13px);
+  width: 80px;
+}
+
+.settings-section-title {
+  margin: 18px 0 2px 0;
+  font-size: calc(var(--ui-scale) * 13px);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.settings-section-desc {
+  margin: 0 0 6px 0;
+  font-size: calc(var(--ui-scale) * 12px);
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ON/OFF ワンクリックトグル(ドロップダウンの代わり)
+ * border を常に 1px 確保し、ON/OFF 切替で行の高さが変わらないようにする */
+.toggle-btn {
+  min-width: 64px;
+  padding: calc(var(--ui-scale) * 6px) calc(var(--ui-scale) * 14px);
+  font-size: calc(var(--ui-scale) * 13px);
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+  box-sizing: border-box;
+}
+.toggle-btn.toggle-on {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.toggle-btn.toggle-on:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+.toggle-btn.toggle-off {
+  background: var(--panel);
+  color: var(--muted);
+  border-color: var(--border);
+}
+.toggle-btn.toggle-off:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.settings-row-dir {
+  align-items: center;
+}
+
+.dir-picker {
+  display: flex;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.dir-picker input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: calc(var(--ui-scale) * 30px);
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: calc(var(--ui-scale) * 12px);
+}
+
+.dir-picker button {
+  flex-shrink: 0;
+  height: calc(var(--ui-scale) * 30px);
+  padding: 5px 10px;
+  font-size: calc(var(--ui-scale) * 12px);
+}
+
+.settings-nav-btn {
+  width: 100%;
+  margin-top: 14px;
+  text-align: left;
+}
+
+/* UIサイズ調整スライダー(設定 > 表示、v3.0) */
+.range-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-field input[type='range'] {
+  accent-color: var(--accent);
+  width: 120px;
+}
+
+.range-value {
+  font-size: calc(var(--ui-scale) * 12px);
+  color: var(--muted);
+  min-width: 3.2em;
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------- */
+/* テンプレート管理ビュー                                                   */
+/* ---------------------------------------------------------------------- */
+
+.template-manage-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.template-manage-header h3 {
+  margin: 0;
+  font-size: calc(var(--ui-scale) * 16px);
+}
+
+.template-manage-empty {
+  color: var(--muted);
+  font-size: calc(var(--ui-scale) * 13px);
+}
+
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.template-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.template-item-preview {
+  flex-shrink: 0;
+  width: 220px;
+  height: 150px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.template-item-preview svg {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.template-item-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.template-item-name {
+  font-size: calc(var(--ui-scale) * 14px);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.template-item-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.template-item-actions button {
+  padding: 6px 12px;
+  font-size: calc(var(--ui-scale) * 12.5px);
+  margin-top: 0;
+}
+
+.history-clear-all {
+  margin-top: 14px;
+}
+
+.history-item-meta {
+  color: var(--muted);
+  font-size: calc(var(--ui-scale) * 12px);
+  display: block;
+  margin-top: 2px;
+}
+
+.template-edit-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--accent);
+  color: var(--text);
+  font-size: calc(var(--ui-scale) * 12px);
+}
+
+/* ---------------------------------------------------------------------- */
+/* 確認モーダル(汎用) / テンプレート名入力 / 終了時保存確認                  */
+/* ---------------------------------------------------------------------- */
+
+.confirm-panel {
+  max-width: 380px;
+}
+
+.template-name-input {
+  width: 100%;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: calc(var(--ui-scale) * 13px);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.modal-actions button {
+  margin-top: 0;
+}
+
+.modal-actions-vertical {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ---------------------------------------------------------------------- */
+/* 簡易入力ポップアップ (グローバルホットキーで開く。コードの打ち込みと画像コピーのみ) */
+/* ---------------------------------------------------------------------- */
+.quick-popup-body {
+  margin: 0;
+  width: 320px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.quick-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+}
+
+.quick-popup-preview {
+  min-height: 64px;
+  max-height: 160px;
+  overflow: auto;
+  background-image: linear-gradient(45deg, var(--checker-a) 25%, transparent 25%), linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checker-a) 75%), linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  background-color: var(--checker-b);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+
+.quick-popup-preview svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.quick-popup-preview-error {
+  color: var(--danger);
+  font-size: 12px;
+  padding: 4px;
+}
+
+.quick-popup-input {
+  width: 100%;
+  min-height: 72px;
+  resize: vertical;
+  box-sizing: border-box;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+}
+
+.quick-popup-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.quick-popup-status {
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-popup-status.err {
+  color: var(--danger);
+}
+.quick-popup-status.ok {
+  color: var(--success);
+}
+
+.quick-popup-row button {
+  margin-top: 0;
+  white-space: nowrap;
+  padding: 8px 10px;
+  font-size: 12px;
+}

@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Equashare",
+  "version": "5.0.0",
+  "description": "LaTeX数式をその場でプレビューし、画像(PNG/SVG)やLaTeXソースとしてコピー・保存できる数式エディタ。",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0cb9BJS36UjaMqGqnxGz3UMWx4cItd8wXRyl0mZM4r6h4N/cMpBHYutWwdBWaZyCR9fMaz+g3HM4kJ6lUqsRciSwvZ9izLAAJksfSxfCYEZOluObbHJU+P42KC9qJY3JRZ6lgKu1eFihr1dPARXoI1tfRMWe16lI2ShJNQidPkgqgMlymhfoeBpxt+JthtbbvxIZ2zNaOz6FLdW7xBZl32bOoAV1KvX75o7RpA7x9/NtaHIc81HryEaWbT1lpcmZflQZR4XU+WojwlBxf/XHr0nbaamFm+QZq+lIo6C5xOXosi9ec6dolwAaHB7ljQ24EUppEgw9c4jx3Cd0l9SOnQIDAQAB",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "Equashare"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "commands": {
+    "open-quick-popup": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
+      },
+      "description": "簡易入力ポップアップを開く(コードの打ち込みと画像コピーのみ)"
+    }
+  },
+  "permissions": [
+    "downloads",
+    "storage",
+    "clipboardWrite",
+    "contextMenus",
+    "scripting",
+    "activeTab",
+    "nativeMessaging"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
