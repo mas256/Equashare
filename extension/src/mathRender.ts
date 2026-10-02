@@ -243,7 +243,9 @@ function normalizeVectorCommands(tex: string): string {
 // CJK フォールバック <text> -> フォントアウトライン <path>
 // ---------------------------------------------------------------------------
 
-const CJK_FONT_URL = '/fonts/NotoSerifJP-Regular.woff';
+// Resolve from the deployed app URL so the same build works at both the extension root
+// and a GitHub Pages project path such as /math-textbooks/.
+const CJK_FONT_URL = new URL(`${import.meta.env.BASE_URL}fonts/NotoSerifJP-Regular.woff`, document.baseURI).href;
 
 type CjkFontState = 'unloaded' | 'loading' | 'ready';
 let cjkFontState: CjkFontState = 'unloaded';

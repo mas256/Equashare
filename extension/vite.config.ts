@@ -11,6 +11,8 @@ const appVersion = require('./package.json').version;
 // src/background.ts としてビルドパイプラインに含めている(下のrollupOptions.input参照)。
 export default defineConfig(async () => ({
   clearScreen: false,
+  // Relative asset paths work both from the extension root and GitHub Pages project paths.
+  base: './',
   server: {
     port: 5173,
     strictPort: true,

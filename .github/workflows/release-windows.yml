@@ -41,7 +41,7 @@ jobs:
           npm test
           npm run build
           $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          $zipName = "equashare-extension-$version-unpacked.zip"
+          $zipName = "equashare-extension-$version-dist.zip"
           Compress-Archive -Path dist/* -DestinationPath "$env:GITHUB_WORKSPACE/$zipName" -Force
           "EXTENSION_VERSION=$version" >> $env:GITHUB_ENV
           "EXTENSION_ZIP_NAME=$zipName" >> $env:GITHUB_ENV
@@ -64,11 +64,17 @@ jobs:
           if ($version -ne $env:EXTENSION_VERSION) { throw 'Desktop and extension versions do not match.' }
           $tag = "v$version"
           $installerName = "Equashare_{0}_x64-setup.exe" -f $version
+          $sourceZip = "equashare-$version-src.zip"
+          $extensionSourceZip = "equashare-extension-$version-src.zip"
           $installer = Get-ChildItem desktop/src-tauri/target/release/bundle/nsis -Filter '*-setup.exe' | Select-Object -First 1
           if (-not $installer) { throw 'The NSIS installer was not created.' }
           Copy-Item $installer.FullName $installerName -Force
           $extensionZip = $env:EXTENSION_ZIP_NAME
           if (-not (Test-Path $extensionZip)) { throw 'The unpacked extension ZIP was not created.' }
+          git archive --format=zip --output=$sourceZip HEAD desktop extension shared README.md README_en.md README_jp.md .gitignore ".github/workflows/release-windows.yml" "INSTALL_$version.md" "RELEASE_NOTES_$version.md"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create the source archive.' }
+          git archive --format=zip --output=$extensionSourceZip HEAD extension
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create the extension source archive.' }
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -92,8 +98,8 @@ jobs:
 
           gh release view $tag --repo mas256/Equashare *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag $installerName $extensionZip --repo mas256/Equashare --clobber
+            gh release upload $tag $installerName $extensionZip $sourceZip $extensionSourceZip --repo mas256/Equashare --clobber
           } else {
-            gh release create $tag $installerName $extensionZip --repo mas256/Equashare --title "Equashare $tag" --notes-file RELEASE_NOTES_5.0.1.md
+            gh release create $tag $installerName $extensionZip $sourceZip $extensionSourceZip --repo mas256/Equashare --title "Equashare $tag" --notes-file "RELEASE_NOTES_$version.md"
           }
           if ($LASTEXITCODE -ne 0) { throw 'Could not publish the GitHub release.' }

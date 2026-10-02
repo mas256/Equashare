@@ -1,6 +1,6 @@
 # Equashare
 
-## v5.0.1
+## v5.0.2
 
 Windowsデスクトップ版とChrome/Edge拡張機能版のソースは、それぞれ [`desktop/`](desktop/) と [`extension/`](extension/) にあります。インストーラーと拡張機能のビルド済みZIPは [Releases](https://github.com/mas256/Equashare/releases) から取得できます。
 
@@ -8,7 +8,7 @@ Windowsデスクトップ版とChrome/Edge拡張機能版のソースは、そ�
 
 初回のアプリ起動でWindowsサインイン時の常駐とNative Messaging連携を設定します。拡張機能のショートカットが有効かは `chrome://extensions/shortcuts` または `edge://extensions/shortcuts` で確認してください。
 
-更新手順は [v5.0.1 セットアップ](INSTALL_5.0.1.md)を参照してください。
+更新手順は [v5.0.2 セットアップ](INSTALL_5.0.2.md)を参照してください。
 
 [English](README_en.md) | 日本語
 

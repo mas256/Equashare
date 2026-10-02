@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Equashare",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "description": "LaTeX数式をその場でプレビューし、画像(PNG/SVG)やLaTeXソースとしてコピー・保存できる数式エディタ。",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0cb9BJS36UjaMqGqnxGz3UMWx4cItd8wXRyl0mZM4r6h4N/cMpBHYutWwdBWaZyCR9fMaz+g3HM4kJ6lUqsRciSwvZ9izLAAJksfSxfCYEZOluObbHJU+P42KC9qJY3JRZ6lgKu1eFihr1dPARXoI1tfRMWe16lI2ShJNQidPkgqgMlymhfoeBpxt+JthtbbvxIZ2zNaOz6FLdW7xBZl32bOoAV1KvX75o7RpA7x9/NtaHIc81HryEaWbT1lpcmZflQZR4XU+WojwlBxf/XHr0nbaamFm+QZq+lIo6C5xOXosi9ec6dolwAaHB7ljQ24EUppEgw9c4jx3Cd0l9SOnQIDAQAB",
   "icons": {

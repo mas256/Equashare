@@ -9,8 +9,9 @@ const originalFetch = globalThis.fetch;
 
 globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   const url = typeof input === 'string' ? input : input.toString();
-  if (url.startsWith('/fonts/')) {
-    const filePath = resolve(__dirname, '../../public', url.replace(/^\//, ''));
+  const fontPath = new URL(url, 'http://localhost/').pathname.match(/\/fonts\/(.+)$/)?.[1];
+  if (fontPath) {
+    const filePath = resolve(__dirname, '../../public/fonts', fontPath);
     const buf = readFileSync(filePath);
     return new Response(buf);
   }
