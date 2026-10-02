@@ -73,7 +73,7 @@ jobs:
           if (-not (Test-Path $extensionZip)) { throw 'The unpacked extension ZIP was not created.' }
           git archive --format=zip --output=$sourceZip HEAD desktop extension shared README.md README_en.md README_jp.md .gitignore ".github/workflows/release-windows.yml" "INSTALL_$version.md" "RELEASE_NOTES_$version.md"
           if ($LASTEXITCODE -ne 0) { throw 'Could not create the source archive.' }
-          git archive --format=zip --output=$extensionSourceZip HEAD extension
+          git archive --format=zip --output=$extensionSourceZip HEAD extension shared
           if ($LASTEXITCODE -ne 0) { throw 'Could not create the extension source archive.' }
 
           git config user.name 'github-actions[bot]'
