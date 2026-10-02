@@ -7,6 +7,7 @@ import { documentDir, appDataDir, join as pathJoin } from '@tauri-apps/api/path'
 import { appWindow, WebviewWindow } from '@tauri-apps/api/window';
 import { register as registerGlobalShortcut, unregister as unregisterGlobalShortcut, isRegistered as isGlobalShortcutRegistered } from '@tauri-apps/api/globalShortcut';
 import { shouldRegisterDesktopShortcut } from './shortcutRouting';
+import { COMMON_SETTING_KEYS, createSettingsBackupJson, parseSettingsBackupJson } from '../../shared/settingsTransfer';
 
 type OutputFormat = 'svg' | 'png';
 
@@ -54,6 +55,7 @@ const UI_SCALE_KEY = 'mathimg.uiScalePercent';
 const TMPL_SCALE_KEY = 'mathimg.tmplScalePercent';
 const QUICK_POPUP_HOTKEY_KEY = 'mathimg.quickPopupHotkey';
 const QUICK_POPUP_HOTKEY_ENABLED_KEY = 'mathimg.quickPopupHotkeyEnabled';
+const SETTINGS_TRANSFER_KEYS = [...COMMON_SETTING_KEYS, EXIT_SAVE_KEY] as const;
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -138,6 +140,8 @@ const settingDefaultScaleEl = $<HTMLInputElement>('settingDefaultScale');
 const settingDefaultPaddingPxEl = $<HTMLInputElement>('settingDefaultPaddingPx');
 const settingDefaultTransparentBgEl = $<HTMLButtonElement>('settingDefaultTransparentBg');
 const btnManageTemplates = $<HTMLButtonElement>('btnManageTemplates');
+const btnExportSettings = $<HTMLButtonElement>('btnExportSettings');
+const btnImportSettings = $<HTMLButtonElement>('btnImportSettings');
 const btnTemplateManageBack = $<HTMLButtonElement>('btnTemplateManageBack');
 const templateManageListEl = $<HTMLDivElement>('templateManageList');
 const templateManageEmptyEl = $<HTMLParagraphElement>('templateManageEmpty');
@@ -2031,6 +2035,95 @@ async function doImportTemplates(): Promise<void> {
 
 btnTemplateExport.addEventListener('click', () => void doExportTemplates());
 btnTemplateImport.addEventListener('click', () => void doImportTemplates());
+
+function applySettingsBackup(settings: Record<string, string>): number {
+  const transferableKeys = new Set<string>(SETTINGS_TRANSFER_KEYS);
+  const entries = Object.entries(settings).filter(([key]) => transferableKeys.has(key));
+  if (entries.length === 0) return 0;
+
+  const previous = new Map<string, string | null>();
+  for (const key of SETTINGS_TRANSFER_KEYS) previous.set(key, localStorage.getItem(key));
+  try {
+    for (const key of SETTINGS_TRANSFER_KEYS) localStorage.removeItem(key);
+    for (const [key, value] of entries) localStorage.setItem(key, value);
+  } catch (error) {
+    for (const [key, value] of previous) {
+      try {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      } catch {
+        // Keep the original write error; storage rollback is best effort.
+      }
+    }
+    throw error;
+  }
+
+  setLang(settings['mathimg.lang'] === 'en' ? 'en' : 'ja');
+  applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
+  applyUiScale(getUiScalePercent());
+  applyTmplScale(getTmplScalePercent());
+  applyI18nToDom();
+  loadSettingsIntoUI();
+  refreshUserTemplateSelect();
+  updateTemplateEditUI();
+  if (!isSuggestEnabled()) closeSuggestPopup();
+  setHistoryLimit(getHistoryLimit());
+  return entries.length;
+}
+
+async function doExportSettings(): Promise<void> {
+  try {
+    const defaultPath = joinPath(await defaultSaveDir(), 'Equashare settings.json');
+    const path = await save({ filters: [{ name: 'JSON', extensions: ['json'] }], defaultPath });
+    if (!path) {
+      setStatus(t('status.settingsExportCancelled'));
+      return;
+    }
+    setStatus(t('status.settingsExporting'));
+    const json = createSettingsBackupJson(localStorage, SETTINGS_TRANSFER_KEYS, getLang());
+    const bytes = Array.from(new TextEncoder().encode(json));
+    await invoke('save_bytes', { path, bytes });
+    rememberDir(path);
+    setStatus(t('status.settingsExported', { path }), 'ok');
+  } catch (error) {
+    setStatus(t('status.settingsExportFailed', { message: error instanceof Error ? error.message : String(error) }), 'err');
+  }
+}
+
+async function doImportSettings(): Promise<void> {
+  try {
+    const defaultPath = await defaultSaveDir();
+    const picked = await openDialogPicker({ filters: [{ name: 'JSON', extensions: ['json'] }], defaultPath, multiple: false });
+    if (!picked || typeof picked !== 'string') {
+      setStatus(t('status.settingsImportCancelled'));
+      return;
+    }
+    setStatus(t('status.settingsImporting'));
+    const raw = await invoke<string | null>('read_text_file', { path: picked });
+    const backup = raw ? parseSettingsBackupJson(raw) : null;
+    const transferableKeys = new Set<string>(SETTINGS_TRANSFER_KEYS);
+    if (!backup || !Object.keys(backup.settings).some((key) => transferableKeys.has(key))) {
+      setStatus(t('status.settingsImportInvalid'), 'err');
+      return;
+    }
+
+    const confirmed = await ask(t('settings.transfer.confirm'), {
+      title: t('settings.transfer.title'),
+      type: 'warning',
+    });
+    if (!confirmed) {
+      setStatus(t('status.settingsImportCancelled'));
+      return;
+    }
+    const count = applySettingsBackup(backup.settings);
+    setStatus(t('status.settingsImported', { count }), 'ok');
+  } catch (error) {
+    setStatus(t('status.settingsImportFailed', { message: error instanceof Error ? error.message : String(error) }), 'err');
+  }
+}
+
+btnExportSettings.addEventListener('click', () => void doExportSettings());
+btnImportSettings.addEventListener('click', () => void doImportSettings());
 
 // ---------------------------------------------------------------------------
 // テンプレート名入力モーダル (「現在のソースをテンプレートとして保存」)

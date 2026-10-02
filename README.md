@@ -1,6 +1,6 @@
 # Equashare
 
-## v5.0.0
+## v5.0.1
 
 Windowsデスクトップ版とChrome/Edge拡張機能版のソースは、それぞれ [`desktop/`](desktop/) と [`extension/`](extension/) にあります。インストーラーと拡張機能のビルド済みZIPは [Releases](https://github.com/mas256/Equashare/releases) から取得できます。
 
@@ -8,7 +8,7 @@ Windowsデスクトップ版とChrome/Edge拡張機能版のソースは、そ�
 
 初回のアプリ起動でWindowsサインイン時の常駐とNative Messaging連携を設定します。拡張機能のショートカットが有効かは `chrome://extensions/shortcuts` または `edge://extensions/shortcuts` で確認してください。
 
-更新手順は [v5.0.0 セットアップ](INSTALL_5.0.0.md)を参照してください。
+更新手順は [v5.0.1 セットアップ](INSTALL_5.0.1.md)を参照してください。
 
 [English](README_en.md) | 日本語
 
@@ -41,6 +41,7 @@ Rustによる高速な処理と効率的なレンダリングにより、入力�
     既存のLaTeX文書に貼り付けて使う用途向け
 - **出力形式**: SVG(ベクター) / PNG から選択、文字サイズ・解像度倍率・余白(px)・文字色・背景色 (透過も可)
 - **入力補助**: よく使う数式のサンプル挿入、分数・根号・上下付き・総和・積分などのテンプレートボタン
+- **設定の移行**: 表示や既定の出力設定をJSONへエクスポートし、別のEquashare環境へインポートできます
 
 詳細はアプリ右上の?ボタンから機能を読んでください。
 
@@ -116,6 +117,7 @@ entirely offline.
   color, and background color (including transparency)
 - **Input assistance**: insert common formula samples, plus template buttons for fractions, roots,
   sub/superscripts, summation, integrals, and more
+- **Settings transfer**: export display and default output preferences as JSON and import them into another Equashare environment
 
 See the ? button in the top right of the app for full details.
 

@@ -9,7 +9,7 @@
   },
   "package": {
     "productName": "Equashare",
-    "version": "5.0.0"
+    "version": "5.0.1"
   },
   "tauri": {
     "systemTray": { "iconPath": "icons/icon.ico" },

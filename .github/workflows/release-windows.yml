@@ -1,0 +1,99 @@
+name: Build and publish Windows release
+
+on:
+  push:
+    branches:
+      - 'release/**'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: startsWith(github.ref, 'refs/heads/release/')
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out release branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            desktop/package-lock.json
+            extension/package-lock.json
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Test and build extension
+        shell: pwsh
+        working-directory: extension
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm run build
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $zipName = "equashare-extension-$version-unpacked.zip"
+          Compress-Archive -Path dist/* -DestinationPath "$env:GITHUB_WORKSPACE/$zipName" -Force
+          "EXTENSION_VERSION=$version" >> $env:GITHUB_ENV
+          "EXTENSION_ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+
+      - name: Test and build desktop app
+        shell: pwsh
+        working-directory: desktop
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+          npm run tauri -- build --bundles nsis
+
+      - name: Prepare installer and release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content desktop/src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).package.version
+          if ($version -ne $env:EXTENSION_VERSION) { throw 'Desktop and extension versions do not match.' }
+          $tag = "v$version"
+          $installerName = "Equashare_{0}_x64-setup.exe" -f $version
+          $installer = Get-ChildItem desktop/src-tauri/target/release/bundle/nsis -Filter '*-setup.exe' | Select-Object -First 1
+          if (-not $installer) { throw 'The NSIS installer was not created.' }
+          Copy-Item $installer.FullName $installerName -Force
+          $extensionZip = $env:EXTENSION_ZIP_NAME
+          if (-not (Test-Path $extensionZip)) { throw 'The unpacked extension ZIP was not created.' }
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- $installerName
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) {
+            git commit -m "Add Windows installer for $tag"
+            if ($LASTEXITCODE -ne 0) { throw 'Could not commit the installer.' }
+          }
+          git push origin "HEAD:refs/heads/$env:GITHUB_REF_NAME"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not update the release branch.' }
+          git push origin "HEAD:refs/heads/main"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not add the installer to main.' }
+
+          $remoteTag = git ls-remote --tags origin "refs/tags/$tag"
+          if (-not $remoteTag) {
+            git tag -a $tag -m "Equashare $version"
+            git push origin "refs/tags/$tag"
+            if ($LASTEXITCODE -ne 0) { throw 'Could not push the release tag.' }
+          }
+
+          gh release view $tag --repo mas256/Equashare *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $installerName $extensionZip --repo mas256/Equashare --clobber
+          } else {
+            gh release create $tag $installerName $extensionZip --repo mas256/Equashare --title "Equashare $tag" --notes-file RELEASE_NOTES_5.0.1.md
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Could not publish the GitHub release.' }

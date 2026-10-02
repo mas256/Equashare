@@ -2,6 +2,7 @@ import './style.css';
 import { composeMathML, composeSvg, composeUnicodeApprox, setCJKFontReadyListener, splitLinesWithNumbers, RenderOptions } from './mathRender';
 import { t, applyI18nToDom, getLang, setLang, Lang } from './i18n';
 import * as platform from './platform';
+import { COMMON_SETTING_KEYS, createSettingsBackupJson, parseSettingsBackupJson } from '../../shared/settingsTransfer';
 
 type OutputFormat = 'svg' | 'png';
 
@@ -44,6 +45,7 @@ const TAB_SIZE_KEY = 'mathimg.tabSize';
 // v3.0: UIサイズ調整(%, 100=等倍)。言語(mathimg.lang)自体はi18n.ts側で管理する。
 const UI_SCALE_KEY = 'mathimg.uiScalePercent';
 const TMPL_SCALE_KEY = 'mathimg.tmplScalePercent';
+const SETTINGS_TRANSFER_KEYS = [...COMMON_SETTING_KEYS, STARTUP_MODE_KEY] as const;
 
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -124,12 +126,15 @@ const settingDefaultScaleEl = $<HTMLInputElement>('settingDefaultScale');
 const settingDefaultPaddingPxEl = $<HTMLInputElement>('settingDefaultPaddingPx');
 const settingDefaultTransparentBgEl = $<HTMLButtonElement>('settingDefaultTransparentBg');
 const btnManageTemplates = $<HTMLButtonElement>('btnManageTemplates');
+const btnExportSettings = $<HTMLButtonElement>('btnExportSettings');
+const btnImportSettings = $<HTMLButtonElement>('btnImportSettings');
 const btnTemplateManageBack = $<HTMLButtonElement>('btnTemplateManageBack');
 const templateManageListEl = $<HTMLDivElement>('templateManageList');
 const templateManageEmptyEl = $<HTMLParagraphElement>('templateManageEmpty');
 const btnTemplateImport = $<HTMLButtonElement>('btnTemplateImport');
 const btnTemplateExport = $<HTMLButtonElement>('btnTemplateExport');
 const templateImportInputEl = $<HTMLInputElement>('templateImportInput');
+const settingsImportInputEl = $<HTMLInputElement>('settingsImportInput');
 
 // テンプレートインポート時の名前衝突モーダル(3択)
 const templateImportConflictOverlayEl = $<HTMLDivElement>('templateImportConflictOverlay');
@@ -2079,6 +2084,91 @@ templateImportInputEl.addEventListener('change', () => {
 
 btnTemplateExport.addEventListener('click', () => void doExportTemplates());
 btnTemplateImport.addEventListener('click', () => templateImportInputEl.click());
+
+function applySettingsBackup(settings: Record<string, string>): number {
+  const transferableKeys = new Set<string>(SETTINGS_TRANSFER_KEYS);
+  const entries = Object.entries(settings).filter(([key]) => transferableKeys.has(key));
+  if (entries.length === 0) return 0;
+
+  const previous = new Map<string, string | null>();
+  for (const key of SETTINGS_TRANSFER_KEYS) previous.set(key, localStorage.getItem(key));
+  try {
+    for (const key of SETTINGS_TRANSFER_KEYS) localStorage.removeItem(key);
+    for (const [key, value] of entries) localStorage.setItem(key, value);
+  } catch (error) {
+    for (const [key, value] of previous) {
+      try {
+        if (value === null) localStorage.removeItem(key);
+        else localStorage.setItem(key, value);
+      } catch {
+        // Keep the original write error; storage rollback is best effort.
+      }
+    }
+    throw error;
+  }
+
+  setLang(settings['mathimg.lang'] === 'en' ? 'en' : 'ja');
+  applyTheme(localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark');
+  applyUiScale(getUiScalePercent());
+  applyTmplScale(getTmplScalePercent());
+  applyI18nToDom();
+  loadSettingsIntoUI();
+  refreshUserTemplateSelect();
+  updateTemplateEditUI();
+  if (!isSuggestEnabled()) closeSuggestPopup();
+  setHistoryLimit(getHistoryLimit());
+  return entries.length;
+}
+
+async function doExportSettings(): Promise<void> {
+  const filename = 'Equashare settings.json';
+  try {
+    setStatus(t('status.settingsExporting'));
+    const json = createSettingsBackupJson(localStorage, SETTINGS_TRANSFER_KEYS, getLang());
+    const result = await platform.saveAsFile(json, filename, 'application/json');
+    if (result === 'cancelled') {
+      setStatus(t('status.settingsExportCancelled'));
+      return;
+    }
+    setStatus(t('status.settingsExported', { path: filename }), 'ok');
+  } catch (error) {
+    setStatus(t('status.settingsExportFailed', { message: error instanceof Error ? error.message : String(error) }), 'err');
+  }
+}
+
+async function doImportSettings(file: File): Promise<void> {
+  try {
+    setStatus(t('status.settingsImporting'));
+    const backup = parseSettingsBackupJson(await file.text());
+    const transferableKeys = new Set<string>(SETTINGS_TRANSFER_KEYS);
+    if (!backup || !Object.keys(backup.settings).some((key) => transferableKeys.has(key))) {
+      setStatus(t('status.settingsImportInvalid'), 'err');
+      return;
+    }
+
+    const confirmed = await openConfirmDialog(
+      t('settings.transfer.confirm'),
+      t('settings.transfer.import'),
+    );
+    if (!confirmed) {
+      setStatus(t('status.settingsImportCancelled'));
+      return;
+    }
+    const count = applySettingsBackup(backup.settings);
+    setStatus(t('status.settingsImported', { count }), 'ok');
+  } catch (error) {
+    setStatus(t('status.settingsImportFailed', { message: error instanceof Error ? error.message : String(error) }), 'err');
+  } finally {
+    settingsImportInputEl.value = '';
+  }
+}
+
+btnExportSettings.addEventListener('click', () => void doExportSettings());
+btnImportSettings.addEventListener('click', () => settingsImportInputEl.click());
+settingsImportInputEl.addEventListener('change', () => {
+  const file = settingsImportInputEl.files?.[0];
+  if (file) void doImportSettings(file);
+});
 
 // ---------------------------------------------------------------------------
 // テンプレート名入力モーダル (「現在のソースをテンプレートとして保存」)

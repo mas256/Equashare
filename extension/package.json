@@ -1,6 +1,6 @@
 {
   "name": "equashare-extension",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Equashare Chrome/Edge拡張機能版",
   "main": "index.js",
   "scripts": {

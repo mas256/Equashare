@@ -37,6 +37,7 @@ entirely offline.
   color, and background color (including transparency)
 - **Input assistance**: insert common formula samples, plus template buttons for fractions, roots,
   sub/superscripts, summation, integrals, and more
+- **Settings transfer**: export display and default output preferences as JSON and import them into another Equashare environment
 
 See the ? button in the top right of the app for full details.
 
