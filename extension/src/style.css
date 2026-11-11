@@ -366,6 +366,13 @@ label {
   min-width: 0;
   height: 100%;
   min-height: 160px;
+  /* #inputOverlayはtransformでスクロール追従させるため、はみ出した分はここで切り取る。 */
+  overflow: hidden;
+}
+
+.gutter-inner,
+.input-overlay {
+  will-change: transform;
 }
 
 /* #inputOverlay と textarea#input は同一のフォント/行間/パディングでぴったり重ねる。
@@ -388,7 +395,8 @@ textarea#input {
 
 .input-overlay {
   color: var(--text);
-  overflow: hidden;
+  /* スクロール位置はJS側でtransformとして与える(自前ではスクロールしない)。 */
+  overflow: visible;
   pointer-events: none;
   user-select: none;
 }

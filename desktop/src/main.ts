@@ -64,6 +64,11 @@ const inputOverlayEl = $<HTMLPreElement>('inputOverlay');
 const bracketHighlightAEl = $<HTMLDivElement>('bracketHighlightA');
 const bracketHighlightBEl = $<HTMLDivElement>('bracketHighlightB');
 const gutterEl = $<HTMLDivElement>('gutter');
+// 行番号の実体を入れる内側の要素。スクロール追従はこの要素をtransformで動かして行う
+// (syncInputOverlayScroll参照)。#gutter自体は overflow:hidden の「窓」として固定する。
+const gutterInnerEl = document.createElement('div');
+gutterInnerEl.className = 'gutter-inner';
+gutterEl.replaceChildren(gutterInnerEl);
 const formatEl = $<HTMLSelectElement>('format');
 const fontSizeEl = $<HTMLInputElement>('fontSize');
 const scaleEl = $<HTMLInputElement>('scale');
@@ -316,7 +321,7 @@ function updateGutter(errorLineNumbers: Set<number> = lastGutterErrorLineNumbers
     const cls = errorLineNumbers.has(i) ? ' class="gutter-line gutter-line-error"' : ' class="gutter-line"';
     parts.push(`<div${cls}>${i}</div>`);
   }
-  gutterEl.innerHTML = parts.join('');
+  gutterInnerEl.innerHTML = parts.join('');
 }
 
 // ---------------------------------------------------------------------------
@@ -1311,8 +1316,16 @@ function renderInputOverlay(): void {
 
 /** textareaのscrollTop/scrollLeftと#inputOverlayの表示位置を1:1で同期させる。 */
 function syncInputOverlayScroll(): void {
-  inputOverlayEl.scrollTop = inputEl.scrollTop;
-  inputOverlayEl.scrollLeft = inputEl.scrollLeft;
+  // 以前は overlay/gutter 自身の scrollTop/scrollLeft に代入していたが、その値は各要素の
+  // スクロール可能範囲(scrollHeight - clientHeight)で黙って切り詰められる。textareaとは
+  // その範囲が一致しない場面がある(末尾が改行のとき<pre>は最後の空行を描画せず1行分短い/
+  // 横スクロールバーが出るとtextareaだけ表示領域が縮む)ため、行数が増えて下端まで
+  // スクロールした時に色付き文字・行番号がキャレットの実位置からズレていた。
+  // transformは切り詰められないので、textareaのスクロール量をそのまま反映できる。
+  const x = inputEl.scrollLeft;
+  const y = inputEl.scrollTop;
+  inputOverlayEl.style.transform = `translate(${-x}px, ${-y}px)`;
+  gutterInnerEl.style.transform = `translateY(${-y}px)`;
 }
 
 /** キャレット位置(caret)から、ハイライト対象の括弧ペアを1つ選ぶ。
@@ -1410,6 +1423,7 @@ function refreshInputOverlay(): void {
   // 同期して即座に更新する。エラー行の色付け自体は直近の判定結果を維持し、デバウンス後の
   // renderPreview()が確定させ次第updateGutter()経由で更新される。
   updateGutter();
+  syncInputOverlayScroll();
   updateActiveBracketHighlight();
 }
 
@@ -2913,7 +2927,6 @@ inputEl.addEventListener('input', () => {
 inputEl.addEventListener('scroll', () => {
   // gutterは overflow:hidden だが、JSからscrollTopを操作すれば表示内容自体は追従する
   // (ユーザーの手動スクロール操作自体は受け付けない=行番号側にスクロールバーを出さない)。
-  gutterEl.scrollTop = inputEl.scrollTop;
   syncInputOverlayScroll();
   if (!suggestPopupEl.classList.contains('hidden')) positionSuggestPopup();
   updateActiveBracketHighlight();
